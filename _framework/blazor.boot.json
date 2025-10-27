@@ -1,10 +1,10 @@
 {
   "mainAssemblyName": "StaplerGameWasm",
   "resources": {
-    "hash": "sha256-TD8c24uvxh0EAxbMbJw0Z1ZCFU0cz7uF4PTnqTAnaq4=",
+    "hash": "sha256-EgaxbwRX8MYO62Zcc9lJJmUjuQgLasNM747RmXHioss=",
     "fingerprinting": {
-      "Microsoft.AspNetCore.Components.agmirsnnqk.wasm": "Microsoft.AspNetCore.Components.wasm",
-      "Microsoft.AspNetCore.Components.Web.akqz85au1m.wasm": "Microsoft.AspNetCore.Components.Web.wasm",
+      "Microsoft.AspNetCore.Components.nwd06z19ko.wasm": "Microsoft.AspNetCore.Components.wasm",
+      "Microsoft.AspNetCore.Components.Web.t48wr6lnrp.wasm": "Microsoft.AspNetCore.Components.Web.wasm",
       "Microsoft.AspNetCore.Components.WebAssembly.89gzge6dxr.wasm": "Microsoft.AspNetCore.Components.WebAssembly.wasm",
       "Microsoft.Extensions.Configuration.2myvfdg1e7.wasm": "Microsoft.Extensions.Configuration.wasm",
       "Microsoft.Extensions.Configuration.Abstractions.rphttcps45.wasm": "Microsoft.Extensions.Configuration.Abstractions.wasm",
@@ -37,7 +37,7 @@
       "System.Text.Json.dek5fmtx16.wasm": "System.Text.Json.wasm",
       "System.Text.RegularExpressions.uppli1il33.wasm": "System.Text.RegularExpressions.wasm",
       "System.Private.CoreLib.djge4urbc0.wasm": "System.Private.CoreLib.wasm",
-      "StaplerGameWasm.sem4zijd2r.wasm": "StaplerGameWasm.wasm",
+      "StaplerGameWasm.tmczk48w8s.wasm": "StaplerGameWasm.wasm",
       "dotnet.js": "dotnet.js",
       "dotnet.native.st0ovrfdhi.js": "dotnet.native.js",
       "dotnet.native.67rumul467.wasm": "dotnet.native.wasm",
@@ -65,8 +65,8 @@
       "System.Private.CoreLib.djge4urbc0.wasm": "sha256-OXfPkgh5408bHgkwrgPFX/7FZgZNaw+iJvjADbDWdV8="
     },
     "assembly": {
-      "Microsoft.AspNetCore.Components.agmirsnnqk.wasm": "sha256-1qIIjaJaoJzyjcw5DDxBUQQQ+JLZb1QjgREiIOpGJJM=",
-      "Microsoft.AspNetCore.Components.Web.akqz85au1m.wasm": "sha256-xjKpK93Teajcx0lkMLcqLGflmS6ZEM0kJ2IgG8r1zoY=",
+      "Microsoft.AspNetCore.Components.nwd06z19ko.wasm": "sha256-Z8ixuLfhI1FopwMbJ8CS1xgIoqqy+bMq+Mc6DfK1gF8=",
+      "Microsoft.AspNetCore.Components.Web.t48wr6lnrp.wasm": "sha256-LdRNqF2bh94ps6NF23tunP5u+YGPKeKbNcaGsV5hj/4=",
       "Microsoft.AspNetCore.Components.WebAssembly.89gzge6dxr.wasm": "sha256-9BpnoYTccEmeGlKSetMgFnAD0r5kXABzYStPWvc/SMY=",
       "Microsoft.Extensions.Configuration.2myvfdg1e7.wasm": "sha256-Bjx1+qelDpa0ZwgfuNzBPRFUId1YrUV4ewnF9w/Uthg=",
       "Microsoft.Extensions.Configuration.Abstractions.rphttcps45.wasm": "sha256-73vrNN0AOVVoO5v9WUY/eY7XR3c3SY/BIDRFLM4a0Q4=",
@@ -97,7 +97,7 @@
       "System.Text.Encodings.Web.17hm3y46w3.wasm": "sha256-c5RLUrDt4sG/1BUZLDKBL/8r3macGjhggRplXaBWcBQ=",
       "System.Text.Json.dek5fmtx16.wasm": "sha256-hY1yctGtllw8dkFHUqvBIfat9dvziGRQy/JmPYtTpf0=",
       "System.Text.RegularExpressions.uppli1il33.wasm": "sha256-cssgrj2fLKJui+a09EbhoMvUEqUJHPWKR47Ri3l887A=",
-      "StaplerGameWasm.sem4zijd2r.wasm": "sha256-dEXZkjrP0cUSlJpOclh4Zb1nh+sIUbfxVm4oqf0aFw8="
+      "StaplerGameWasm.tmczk48w8s.wasm": "sha256-tc4MFiox0TlY1NkB7hKTjU8G4XNbJAr1cqt9ym52BuM="
     }
   },
   "cacheBootResources": true,

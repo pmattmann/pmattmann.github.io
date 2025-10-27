@@ -321,6 +321,27 @@ main[b-at445vr97p] {
     outline: none;
 }
 
+/* Touch-Bereiche für mobile Steuerung */
+.touch-area-top[b-md9otjcolh] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    z-index: 5;
+    cursor: pointer;
+}
+
+.touch-area-bottom[b-md9otjcolh] {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    z-index: 5;
+    cursor: pointer;
+}
+
 .score-display[b-md9otjcolh] {
     position: absolute;
     top: 10px;
