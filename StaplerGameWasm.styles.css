@@ -310,14 +310,16 @@ main[b-at445vr97p] {
 }
 
 .game-area[b-md9otjcolh] {
-    position: relative;
-    width: 800px;
-    height: 400px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     background: linear-gradient(to bottom, #87CEEB 0%, #B0E0E6 100%);
-    border: 4px solid #2c3e50;
-    border-radius: 10px;
+    border: none;
+    border-radius: 0;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    box-shadow: none;
     outline: none;
 }
 
@@ -480,9 +482,8 @@ main[b-at445vr97p] {
 /* Responsive Design */
 @media (max-width: 850px) {
     .game-area[b-md9otjcolh] {
-        width: 95vw;
-        max-width: 600px;
-        height: 300px;
+        width: 100vw;
+        height: 100vh;
     }
 
     .game-title[b-md9otjcolh] {

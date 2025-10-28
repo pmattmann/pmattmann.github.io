@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "StaplerGameWasm",
   "resources": {
-    "hash": "sha256-EgaxbwRX8MYO62Zcc9lJJmUjuQgLasNM747RmXHioss=",
+    "hash": "sha256-jQPT98/Fh2EtpVn/LBpxpM4n6B90I805hfSd+OBqKVI=",
     "fingerprinting": {
       "Microsoft.AspNetCore.Components.nwd06z19ko.wasm": "Microsoft.AspNetCore.Components.wasm",
       "Microsoft.AspNetCore.Components.Web.t48wr6lnrp.wasm": "Microsoft.AspNetCore.Components.Web.wasm",
@@ -37,7 +37,7 @@
       "System.Text.Json.dek5fmtx16.wasm": "System.Text.Json.wasm",
       "System.Text.RegularExpressions.uppli1il33.wasm": "System.Text.RegularExpressions.wasm",
       "System.Private.CoreLib.djge4urbc0.wasm": "System.Private.CoreLib.wasm",
-      "StaplerGameWasm.tmczk48w8s.wasm": "StaplerGameWasm.wasm",
+      "StaplerGameWasm.jt3dumxxkf.wasm": "StaplerGameWasm.wasm",
       "dotnet.js": "dotnet.js",
       "dotnet.native.st0ovrfdhi.js": "dotnet.native.js",
       "dotnet.native.67rumul467.wasm": "dotnet.native.wasm",
@@ -97,7 +97,7 @@
       "System.Text.Encodings.Web.17hm3y46w3.wasm": "sha256-c5RLUrDt4sG/1BUZLDKBL/8r3macGjhggRplXaBWcBQ=",
       "System.Text.Json.dek5fmtx16.wasm": "sha256-hY1yctGtllw8dkFHUqvBIfat9dvziGRQy/JmPYtTpf0=",
       "System.Text.RegularExpressions.uppli1il33.wasm": "sha256-cssgrj2fLKJui+a09EbhoMvUEqUJHPWKR47Ri3l887A=",
-      "StaplerGameWasm.tmczk48w8s.wasm": "sha256-tc4MFiox0TlY1NkB7hKTjU8G4XNbJAr1cqt9ym52BuM="
+      "StaplerGameWasm.jt3dumxxkf.wasm": "sha256-aWW0mmvL48bMoc4Xh8xaUARXedMiByowBIXiU1po6A0="
     }
   },
   "cacheBootResources": true,
