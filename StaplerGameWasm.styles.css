@@ -178,20 +178,108 @@ main[b-at445vr97p] {
 }
 
 .game-title[b-md9otjcolh] {
-    color: #2c3e50;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    color: #FF6B00;
+    text-shadow:
+        3px 3px 0px #000,
+        -1px -1px 0px #000,
+        1px -1px 0px #000,
+        -1px 1px 0px #000,
+        1px 1px 0px #000,
+        0 0 20px rgba(255, 107, 0, 0.5);
     margin-bottom: 20px;
-    font-size: 2.5em;
+    font-size: 3em;
+    font-weight: 900;
+    letter-spacing: 3px;
+    animation: title-glow-b-md9otjcolh 2s ease-in-out infinite alternate;
+}
+
+@keyframes title-glow-b-md9otjcolh {
+    from {
+        text-shadow:
+            3px 3px 0px #000,
+            -1px -1px 0px #000,
+            1px -1px 0px #000,
+            -1px 1px 0px #000,
+            1px 1px 0px #000,
+            0 0 20px rgba(255, 107, 0, 0.5);
+    }
+    to {
+        text-shadow:
+            3px 3px 0px #000,
+            -1px -1px 0px #000,
+            1px -1px 0px #000,
+            -1px 1px 0px #000,
+            1px 1px 0px #000,
+            0 0 40px rgba(255, 107, 0, 0.8);
+    }
 }
 
 .start-screen[b-md9otjcolh],
 .game-over-screen[b-md9otjcolh] {
-    background: white;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     padding: 40px;
-    border-radius: 15px;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     text-align: center;
-    max-width: 500px;
+    max-width: 600px;
+    border: 3px solid #FF6B00;
+}
+
+.intro-subtitle[b-md9otjcolh] {
+    color: #2c3e50;
+    font-size: 1.5em;
+    margin: 0 0 25px 0;
+    font-weight: 600;
+}
+
+.intro-mission[b-md9otjcolh] {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    padding: 20px;
+    border-radius: 12px;
+    margin: 20px 0;
+    border-left: 5px solid #FF6B00;
+}
+
+.mission-text[b-md9otjcolh] {
+    font-size: 1.2em;
+    margin: 0;
+    color: #2c3e50;
+    line-height: 1.6;
+}
+
+.intro-controls[b-md9otjcolh] {
+    background: #e3f2fd;
+    padding: 20px;
+    border-radius: 12px;
+    margin: 20px 0;
+    border-left: 5px solid #2196F3;
+}
+
+.intro-controls h3[b-md9otjcolh] {
+    margin: 0 0 15px 0;
+    color: #1976D2;
+    font-size: 1.3em;
+}
+
+.intro-controls p[b-md9otjcolh] {
+    margin: 8px 0;
+    font-size: 1.1em;
+    color: #424242;
+}
+
+.intro-goal[b-md9otjcolh] {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    padding: 15px;
+    border-radius: 12px;
+    margin: 20px 0;
+    border-left: 5px solid #4CAF50;
+}
+
+.intro-goal p[b-md9otjcolh] {
+    font-size: 1.3em;
+    font-weight: 600;
+    margin: 0;
+    color: #2E7D32;
 }
 
 .start-screen p[b-md9otjcolh],
