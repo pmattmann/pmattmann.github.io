@@ -178,14 +178,14 @@ main[b-at445vr97p] {
 }
 
 .game-title[b-md9otjcolh] {
-    color: #FF6B00;
+    color: #2E7D32;
     text-shadow:
         3px 3px 0px #000,
         -1px -1px 0px #000,
         1px -1px 0px #000,
         -1px 1px 0px #000,
         1px 1px 0px #000,
-        0 0 20px rgba(255, 107, 0, 0.5);
+        0 0 20px rgba(46, 125, 50, 0.5);
     margin-bottom: 20px;
     font-size: 3em;
     font-weight: 900;
@@ -201,7 +201,7 @@ main[b-at445vr97p] {
             1px -1px 0px #000,
             -1px 1px 0px #000,
             1px 1px 0px #000,
-            0 0 20px rgba(255, 107, 0, 0.5);
+            0 0 20px rgba(46, 125, 50, 0.5);
     }
     to {
         text-shadow:
@@ -210,7 +210,7 @@ main[b-at445vr97p] {
             1px -1px 0px #000,
             -1px 1px 0px #000,
             1px 1px 0px #000,
-            0 0 40px rgba(255, 107, 0, 0.8);
+            0 0 40px rgba(46, 125, 50, 0.8);
     }
 }
 
@@ -222,6 +222,8 @@ main[b-at445vr97p] {
     box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     text-align: center;
     max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
     border: 3px solid #FF6B00;
 }
 
