@@ -391,6 +391,8 @@ main[b-at445vr97p] {
     left: 0;
     width: 100vw;
     height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
     background: linear-gradient(to bottom, #87CEEB 0%, #B0E0E6 100%);
     border: none;
     border-radius: 0;
@@ -443,6 +445,15 @@ main[b-at445vr97p] {
     transition: top 0.15s ease-out, transform 0.1s ease-out;
     z-index: 10;
     transform-origin: center center;
+}
+
+/* Mobile: Stapler weiter links für mehr Reaktionszeit */
+@media (max-width: 850px) {
+    .forklift[b-md9otjcolh] {
+        left: -10px;
+        width: 150px;
+        height: 105px;
+    }
 }
 
 .forklift-image[b-md9otjcolh] {
@@ -541,5 +552,23 @@ main[b-at445vr97p] {
 
     .title-letters[b-md9otjcolh] {
         gap: 4px;
+    }
+
+    /* Hindernisse auf Mobile kleiner */
+    .obstacle[b-md9otjcolh] {
+        font-size: 1.8em;
+    }
+
+    /* Collectibles auf Mobile kleiner */
+    .collectible[b-md9otjcolh] {
+        transform: scale(0.8);
+    }
+
+    /* Score-Display anpassen */
+    .score-display[b-md9otjcolh] {
+        font-size: 1.3em;
+        top: 5px;
+        right: 10px;
+        padding: 5px 10px;
     }
 }

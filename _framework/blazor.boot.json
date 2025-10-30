@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "StaplerGameWasm",
   "resources": {
-    "hash": "sha256-hxwDNtb3MF5XkYa9kuMC0HrQSbvL35gpd6InCunjK18=",
+    "hash": "sha256-R1yFKWW5DywnrvsXd51Aj8B99pg6hW/xX+tkdHgC4T4=",
     "fingerprinting": {
       "Microsoft.AspNetCore.Components.nwd06z19ko.wasm": "Microsoft.AspNetCore.Components.wasm",
       "Microsoft.AspNetCore.Components.Web.t48wr6lnrp.wasm": "Microsoft.AspNetCore.Components.Web.wasm",
@@ -36,8 +36,8 @@
       "System.Text.Encodings.Web.17hm3y46w3.wasm": "System.Text.Encodings.Web.wasm",
       "System.Text.Json.er5q1frudn.wasm": "System.Text.Json.wasm",
       "System.Text.RegularExpressions.uppli1il33.wasm": "System.Text.RegularExpressions.wasm",
-      "System.Private.CoreLib.lu0p664702.wasm": "System.Private.CoreLib.wasm",
-      "StaplerGameWasm.ri48n4eatf.wasm": "StaplerGameWasm.wasm",
+      "System.Private.CoreLib.p8judhlb3k.wasm": "System.Private.CoreLib.wasm",
+      "StaplerGameWasm.jzp6q2cnz8.wasm": "StaplerGameWasm.wasm",
       "dotnet.js": "dotnet.js",
       "dotnet.native.st0ovrfdhi.js": "dotnet.native.js",
       "dotnet.native.67rumul467.wasm": "dotnet.native.wasm",
@@ -62,7 +62,7 @@
     },
     "coreAssembly": {
       "System.Runtime.InteropServices.JavaScript.lnedh9fxsl.wasm": "sha256-cTDlU0sLp3hCmTKUK2AVqrlAjuFjQveVBhCUZiIdUkc=",
-      "System.Private.CoreLib.lu0p664702.wasm": "sha256-jW7zBoDV/oAZRTDIrjiiGyB3JoM/zg+T3cWAIiUCcDg="
+      "System.Private.CoreLib.p8judhlb3k.wasm": "sha256-FyLciTgkabCb+az2+JjyYBxUt+ZNKBvHyWGg/0pFkfI="
     },
     "assembly": {
       "Microsoft.AspNetCore.Components.nwd06z19ko.wasm": "sha256-Z8ixuLfhI1FopwMbJ8CS1xgIoqqy+bMq+Mc6DfK1gF8=",
@@ -97,7 +97,7 @@
       "System.Text.Encodings.Web.17hm3y46w3.wasm": "sha256-c5RLUrDt4sG/1BUZLDKBL/8r3macGjhggRplXaBWcBQ=",
       "System.Text.Json.er5q1frudn.wasm": "sha256-VvN4T/UDqGmKephIJVQAnAJZzY8Y8Zxfmnyvs7k50vk=",
       "System.Text.RegularExpressions.uppli1il33.wasm": "sha256-cssgrj2fLKJui+a09EbhoMvUEqUJHPWKR47Ri3l887A=",
-      "StaplerGameWasm.ri48n4eatf.wasm": "sha256-HdAHRy1ZLmDcWeil+ewR3fuIBVDc9kIw/e3jnpi3ZYs="
+      "StaplerGameWasm.jzp6q2cnz8.wasm": "sha256-8RS8bS53C4/ytHiyeNjuyy9A/qCKBTfDtc8f9YgBS44="
     }
   },
   "cacheBootResources": true,
