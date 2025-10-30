@@ -545,13 +545,13 @@ main[b-at445vr97p] {
     }
 
     .title-obstacle[b-md9otjcolh] {
-        width: 35px;
-        height: 45px;
-        font-size: 1.2em;
+        width: 28px;
+        height: 36px;
+        font-size: 1em;
     }
 
     .title-letters[b-md9otjcolh] {
-        gap: 4px;
+        gap: 3px;
     }
 
     /* Hindernisse auf Mobile kleiner */
