@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Barcode Tabs</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --panel: #121a33;
+      --panel2: #172140;
+      --text: #eef3ff;
+      --muted: #aab7d6;
+      --ok: #2dd4bf;
+      --warn: #fbbf24;
+      --bad: #fb7185;
+      --line: #2b3966;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 14px/1.3 Inter, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, #09101f 0%, #0f1830 100%);
+      color: var(--text);
+    }
+    .wrap { width: min(1100px, calc(100% - 14px)); margin: 7px auto 10px; }
+    .panel, .card {
+      border: 1px solid var(--line);
+      background: rgba(18, 26, 51, 0.92);
+      border-radius: 14px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.16);
+    }
+    .panel { padding: 9px 10px; }
+    .topbar {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    h1 { margin: 0; font-size: 18px; line-height: 1.1; }
+    .sub { color: var(--muted); font-size: 12px; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 8px; border-radius: 999px;
+      border: 1px solid var(--line); background: rgba(255,255,255,.05);
+      font-size: 12px; font-weight: 700; white-space: nowrap;
+    }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+    .ok { background: var(--ok); }
+    .warn { background: var(--warn); }
+    .bad { background: var(--bad); }
+    .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+    button {
+      border: 0; border-radius: 10px; padding: 8px 10px;
+      font: inherit; font-weight: 700; color: #fff; cursor: pointer;
+      background: linear-gradient(180deg, #5b7cff 0%, #4264ee 100%);
+    }
+    button.secondary { background: #24345f; }
+    button.warn-btn { background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); }
+    .grid { margin-top: 8px; display: grid; grid-template-columns: 1.15fr .85fr; gap: 8px; }
+    @media (max-width: 920px) { .grid { grid-template-columns: 1fr; } }
+    .card { padding: 9px 10px; }
+    .card h2 { margin: 0 0 7px; font-size: 13px; }
+    .status {
+      display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 6px;
+    }
+    @media (max-width: 920px) { .status { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 560px) { .status { grid-template-columns: repeat(2, 1fr); } }
+    .kv {
+      border: 1px solid var(--line); border-radius: 10px; background: var(--panel2);
+      padding: 7px 8px; min-width: 0;
+    }
+    .label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+    .value { margin-top: 2px; font-size: 13px; font-weight: 700; word-break: break-word; }
+    .flash-wrap {
+      border: 1px solid var(--line); border-radius: 12px;
+      background: linear-gradient(180deg, rgba(124,156,255,.1), rgba(124,156,255,.03));
+      padding: 8px;
+      transition: border-color .14s ease, box-shadow .14s ease, transform .14s ease;
+    }
+    .flash-wrap.active { border-color: rgba(45,212,191,.8); box-shadow: 0 0 0 1px rgba(45,212,191,.25); }
+    .flash-box {
+      margin-top: 6px; min-height: 58px; border: 1px solid var(--line); border-radius: 12px;
+      padding: 8px 10px; display: grid; align-content: center; gap: 4px;
+      background: rgba(255,255,255,.03);
+      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+    .flash-box.flash {
+      border-color: rgba(255,209,102,.95);
+      background: linear-gradient(180deg, rgba(255,209,102,.28), rgba(255,209,102,.1));
+      box-shadow: 0 0 0 1px rgba(255,209,102,.35), 0 0 24px rgba(255,209,102,.15);
+      transform: scale(1.01);
+    }
+    .flash-caption { color: var(--muted); font-size: 11px; }
+    .flash-value {
+      font: 800 clamp(16px, 2vw, 24px)/1.1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      word-break: break-word;
+    }
+    .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 156px; overflow: auto; }
+    .list li { border: 1px solid var(--line); background: var(--panel2); border-radius: 9px; padding: 7px 9px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .tiny { color: var(--muted); font-size: 11px; }
+    .headrow { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="panel">
+      <div class="topbar">
+        <div class="pill"><span class="dot" id="heroDot"></span><span id="heroText">Startet…</span></div>
+        <div>
+          <h1>Barcode-Scanner in mehreren Tabs</h1>
+          <div class="sub">Ein Tab liest den Scanner. Nur der aktive Tab zeigt den Scan sichtbar an.</div>
+        </div>
+        <div class="pill"><span class="dot" id="focusDot"></span><span id="focusText">Tab wird geprüft…</span></div>
+      </div>
+      <div class="actions">
+        <button id="btnGrant">Scanner auswählen</button>
+        <button id="btnReconnect" class="secondary">Freigegebenen Scanner laden</button>
+        <button id="btnRelease" class="warn-btn">Scanner im Leader schließen</button>
+        <button id="btnClear" class="secondary">Scans und Log leeren</button>
+      </div>
+      <div class="sub" style="margin-top:6px">Öffne dieselbe Seite mehrfach unter <span class="mono">http://localhost</span>. Ein echter Klick ist nur beim ersten Auswählen nötig.</div>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Status</h2>
+        <div class="status">
+          <div class="kv"><div class="label">Tab</div><div class="value mono" id="tabId">—</div></div>
+          <div class="kv"><div class="label">Rolle</div><div class="value" id="role">—</div></div>
+          <div class="kv"><div class="label">Port</div><div class="value" id="portStatus">—</div></div>
+          <div class="kv"><div class="label">Leader</div><div class="value mono" id="leaderStatus">—</div></div>
+          <div class="kv"><div class="label">Tab aktiv</div><div class="value" id="focusStatus">—</div></div>
+          <div class="kv"><div class="label">Letzter Scan</div><div class="value mono" id="lastScan">—</div></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Aktiver Tab</h2>
+        <div class="flash-wrap" id="focusBox">
+          <div class="sub">Nur der gerade aktive Tab verarbeitet Broadcast-Scans.</div>
+          <div class="flash-box" id="flashPanel">
+            <div class="flash-caption">Zuletzt angezeigt</div>
+            <div class="flash-value" id="flashValue">—</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="headrow"><h2>Ereignisse</h2><div class="tiny">neu oben</div></div>
+        <ul class="list" id="log"></ul>
+      </section>
+
+      <section class="card">
+        <div class="headrow"><h2>Scans im aktiven Tab</h2><div class="tiny">nur Vordergrund</div></div>
+        <ul class="list" id="scans"></ul>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const BAUD_RATE = 9600;
+    const LOCK_NAME = "barcode-scanner-leader";
+    const CHANNEL_NAME = "barcode-scans";
+    const tabId = crypto.randomUUID().slice(0, 8);
+    const channel = new BroadcastChannel(CHANNEL_NAME);
+
+    let port = null;
+    let reader = null;
+    let keepReading = false;
+    let isLeader = false;
+    let opening = false;
+    let lockAbortController = null;
+    let currentLeaderId = null;
+    let readBuffer = "";
+    let flashTimer = null;
+    let leaderHeartbeatTimer = null;
+
+    const els = {
+      tabId: document.getElementById("tabId"),
+      role: document.getElementById("role"),
+      portStatus: document.getElementById("portStatus"),
+      leaderStatus: document.getElementById("leaderStatus"),
+      focusStatus: document.getElementById("focusStatus"),
+      lastScan: document.getElementById("lastScan"),
+      heroDot: document.getElementById("heroDot"),
+      heroText: document.getElementById("heroText"),
+      log: document.getElementById("log"),
+      scans: document.getElementById("scans"),
+      btnGrant: document.getElementById("btnGrant"),
+      btnReconnect: document.getElementById("btnReconnect"),
+      btnRelease: document.getElementById("btnRelease"),
+      btnClear: document.getElementById("btnClear"),
+      focusBox: document.getElementById("focusBox"),
+      focusDot: document.getElementById("focusDot"),
+      focusText: document.getElementById("focusText"),
+      flashPanel: document.getElementById("flashPanel"),
+      flashValue: document.getElementById("flashValue"),
+    };
+
+    const esc = (s) => String(s)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+
+    function log(message, level = "info") {
+      const li = document.createElement("li");
+      li.innerHTML = `<div><strong>${new Date().toLocaleTimeString()}</strong> · ${esc(message)}</div>`;
+      if (level === "warn") li.style.borderColor = "#6b4b12";
+      if (level === "error") li.style.borderColor = "#6b2231";
+      els.log.prepend(li);
+    }
+
+    const isPageActive = () => document.visibilityState === "visible" && document.hasFocus();
+
+    function triggerFlash(code) {
+      els.flashValue.textContent = code;
+      els.flashPanel.classList.remove("flash");
+      void els.flashPanel.offsetWidth;
+      els.flashPanel.classList.add("flash");
+      clearTimeout(flashTimer);
+      flashTimer = setTimeout(() => els.flashPanel.classList.remove("flash"), 650);
+    }
+
+    function processScan(code, source) {
+      const li = document.createElement("li");
+      li.innerHTML = `<div class="mono"><strong>${esc(code)}</strong></div><div class="tiny">${new Date().toLocaleTimeString()} · ${esc(source)}</div>`;
+      els.scans.prepend(li);
+      els.lastScan.textContent = code;
+      triggerFlash(code);
+    }
+
+    function updateHero(text, state = "idle") {
+      els.heroText.textContent = text;
+      els.heroDot.className = "dot";
+      if (state === "ok") els.heroDot.classList.add("ok");
+      else if (state === "warn") els.heroDot.classList.add("warn");
+      else if (state === "bad") els.heroDot.classList.add("bad");
+    }
+
+    function updateFocusUi() {
+      const active = isPageActive();
+      els.focusStatus.textContent = active ? "ja" : "nein";
+      els.focusDot.className = "dot";
+      els.focusBox.classList.toggle("active", active);
+      if (active) {
+        els.focusDot.classList.add("ok");
+        els.focusText.textContent = "Dieser Tab zeigt Scans";
+      } else {
+        els.focusDot.classList.add("warn");
+        els.focusText.textContent = "Dieser Tab ignoriert Scans";
+      }
+    }
+
+    function updateUi() {
+      els.tabId.textContent = tabId;
+      els.role.textContent = isLeader ? "Leader" : "Follower";
+      els.portStatus.textContent = port ? (port.readable ? "offen" : "bekannt") : "kein Port";
+      const leaderText = currentLeaderId ? `${currentLeaderId}${currentLeaderId === tabId ? " (ich)" : ""}` : "—";
+      els.leaderStatus.textContent = leaderText;
+      updateFocusUi();
+
+      if (isLeader && port?.readable) updateHero("Leader liest Scanner", "ok");
+      else if (isLeader) updateHero("Leader aktiv, Scanner noch zu", "warn");
+      else if (currentLeaderId) updateHero(`Follower, Leader: ${currentLeaderId}`, "ok");
+      else updateHero("Wartet auf Leader oder Scanner", "warn");
+    }
+
+    const post = (message) => channel.postMessage({ ...message, from: tabId, at: Date.now() });
+
+    function startLeaderHeartbeat() {
+      stopLeaderHeartbeat();
+      leaderHeartbeatTimer = setInterval(() => post({ type: "leader-active" }), 1000);
+    }
+
+    function stopLeaderHeartbeat() {
+      if (leaderHeartbeatTimer) clearInterval(leaderHeartbeatTimer);
+      leaderHeartbeatTimer = null;
+    }
+
+    async function ensureKnownPort() {
+      if (!("serial" in navigator)) throw new Error("Web Serial wird nicht unterstützt.");
+      if (port) return true;
+      const ports = await navigator.serial.getPorts();
+      if (ports.length > 0) {
+        port = ports[0];
+        log("Freigegebenen Scanner gefunden.");
+        updateUi();
+        return true;
+      }
+      return false;
+    }
+
+    async function requestPortFromUser() {
+      port = await navigator.serial.requestPort();
+      log("Scanner ausgewählt.");
+      updateUi();
+      if (isLeader) await openPortIfPossible();
+    }
+
+    async function openPortIfPossible() {
+      if (!isLeader || !port || opening || port.readable) return;
+      opening = true;
+      try {
+        await port.open({ baudRate: BAUD_RATE });
+        keepReading = true;
+        log(`Scanner geöffnet (${BAUD_RATE} baud).`);
+        updateUi();
+        readLoop().catch((err) => {
+          log(`Leseloop-Fehler: ${err.message || err}`, "error");
+          updateUi();
+        });
+      } finally {
+        opening = false;
+      }
+    }
+
+    async function closePort() {
+      keepReading = false;
+      readBuffer = "";
+      try { if (reader) await reader.cancel(); } catch {}
+      try { if (reader) reader.releaseLock(); } catch {}
+      reader = null;
+      try {
+        if (port?.readable) {
+          await port.close();
+          log("Scanner geschlossen.");
+        }
+      } catch (err) {
+        log(`Schließen fehlgeschlagen: ${err.message || err}`, "warn");
+      }
+      updateUi();
+    }
+
+    function deliverScan(code, source) {
+      if (!isPageActive()) {
+        log(`Ignoriert (Tab nicht aktiv): ${code}`, "warn");
+        return;
+      }
+      processScan(code, source);
+    }
+
+    function consumeChunk(text) {
+      readBuffer += text;
+      const parts = readBuffer.split(/\r?\n/);
+      readBuffer = parts.pop() ?? "";
+      for (const raw of parts) {
+        const code = raw.trim();
+        if (!code) continue;
+        post({ type: "scan", code });
+        deliverScan(code, "leader/lokal");
+      }
+    }
+
+    async function readLoop() {
+      const decoder = new TextDecoder();
+      while (isLeader && keepReading && port?.readable) {
+        reader = port.readable.getReader();
+        try {
+          while (isLeader && keepReading) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            if (!value) continue;
+            consumeChunk(decoder.decode(value, { stream: true }));
+          }
+        } catch (err) {
+          log(`Lesefehler: ${err.message || err}`, "warn");
+        } finally {
+          try { reader.releaseLock(); } catch {}
+          reader = null;
+        }
+      }
+    }
+
+    const waitUntilAborted = (signal) => new Promise((resolve) => {
+      if (signal.aborted) return resolve();
+      signal.addEventListener("abort", resolve, { once: true });
+    });
+
+    async function becomeLeader(signal) {
+      isLeader = true;
+      currentLeaderId = tabId;
+      post({ type: "leader-active" });
+      startLeaderHeartbeat();
+      log("Dieser Tab ist jetzt Leader.");
+      updateUi();
+      try {
+        await ensureKnownPort().catch(() => false);
+        await openPortIfPossible().catch((err) => log(`Öffnen fehlgeschlagen: ${err.message || err}`, "warn"));
+        await waitUntilAborted(signal);
+      } finally {
+        stopLeaderHeartbeat();
+        await closePort();
+        isLeader = false;
+        currentLeaderId = null;
+        post({ type: "leader-inactive" });
+        log("Leader-Rolle abgegeben.");
+        updateUi();
+      }
+    }
+
+    async function participateInLeaderElection() {
+      if (!("locks" in navigator)) {
+        log("Web Locks API fehlt.", "error");
+        updateHero("Web Locks API fehlt", "bad");
+        return;
+      }
+      while (true) {
+        const ac = new AbortController();
+        lockAbortController = ac;
+        try {
+          await navigator.locks.request(LOCK_NAME, async () => becomeLeader(ac.signal));
+        } catch (err) {
+          log(`Lock-Fehler: ${err.message || err}`, "warn");
+        }
+        await new Promise((r) => setTimeout(r, 250));
+      }
+    }
+
+    channel.addEventListener("message", (event) => {
+      const msg = event.data;
+      if (!msg || msg.from === tabId) return;
+      if (msg.type === "scan") deliverScan(msg.code, `broadcast:${msg.from}`);
+      if (msg.type === "leader-active") currentLeaderId = msg.from;
+      if (msg.type === "leader-inactive" && !isLeader && currentLeaderId === msg.from) currentLeaderId = null;
+      if (msg.type === "leader-who-is-there" && isLeader) post({ type: "leader-active" });
+      updateUi();
+    });
+
+    navigator.serial?.addEventListener?.("connect", async () => {
+      log("Scanner verbunden.");
+      await ensureKnownPort().catch(() => false);
+      if (isLeader) await openPortIfPossible().catch((err) => log(`Öffnen nach connect fehlgeschlagen: ${err.message || err}`, "warn"));
+      updateUi();
+    });
+
+    navigator.serial?.addEventListener?.("disconnect", async () => {
+      log("Scanner getrennt.", "warn");
+      await closePort();
+      port = null;
+      updateUi();
+    });
+
+    window.addEventListener("focus", updateUi);
+    window.addEventListener("blur", updateUi);
+    document.addEventListener("visibilitychange", updateUi);
+    window.addEventListener("beforeunload", () => {
+      if (lockAbortController) lockAbortController.abort();
+      stopLeaderHeartbeat();
+      try { channel.close(); } catch {}
+    });
+
+    els.btnGrant.addEventListener("click", async () => {
+      try { await requestPortFromUser(); }
+      catch (err) { log(`Auswählen fehlgeschlagen: ${err.message || err}`, "warn"); }
+    });
+
+    els.btnReconnect.addEventListener("click", async () => {
+      try {
+        const found = await ensureKnownPort();
+        if (!found) return log("Kein freigegebener Scanner gefunden.", "warn");
+        if (isLeader) await openPortIfPossible();
+      } catch (err) {
+        log(`Laden fehlgeschlagen: ${err.message || err}`, "warn");
+      }
+    });
+
+    els.btnRelease.addEventListener("click", async () => {
+      await closePort();
+    });
+
+    els.btnClear.addEventListener("click", () => {
+      els.scans.innerHTML = "";
+      els.log.innerHTML = "";
+      els.lastScan.textContent = "—";
+      els.flashValue.textContent = "—";
+      els.flashPanel.classList.remove("flash");
+      log("Listen geleert.");
+    });
+
+    (async function init() {
+      els.tabId.textContent = tabId;
+      log("Seite geladen.");
+      if (!("serial" in navigator)) {
+        updateHero("Web Serial wird nicht unterstützt", "bad");
+        log("Dieser Browser unterstützt Web Serial nicht.", "error");
+        updateUi();
+        return;
+      }
+      try {
+        const found = await ensureKnownPort();
+        if (!found) log("Noch kein Scanner freigegeben. Klicke auf 'Scanner auswählen'.");
+      } catch (err) {
+        log(`Scanner-Prüfung fehlgeschlagen: ${err.message || err}`, "warn");
+      }
+      updateUi();
+      post({ type: "leader-who-is-there" });
+      participateInLeaderElection();
+    })();
+  </script>
+</body>
+</html>
