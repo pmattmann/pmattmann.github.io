@@ -389,9 +389,18 @@
       log("Dieser Tab ist jetzt Leader.");
       updateUi();
       try {
+        console.time("becomeLeader total");
+        console.time("leader ensureKnownPort");
         await ensureKnownPort().catch(() => false);
+        console.timeEnd("leader ensureKnownPort");
+        
+        console.time("openPortIfPossible");
         await openPortIfPossible().catch((err) => log(`Öffnen fehlgeschlagen: ${err.message || err}`, "warn"));
+        console.timeEnd("openPortIfPossible");
+
+        console.time("waitUntilAborted");
         await waitUntilAborted(signal);
+        console.timeEnd("waitUntilAborted");
       } finally {
         stopLeaderHeartbeat();
         await closePort();
@@ -492,14 +501,18 @@
         return;
       }
       try {
+        console.time("init ensureKnownPort");
         const found = await ensureKnownPort();
+        console.timeEnd("init ensureKnownPort");
         if (!found) log("Noch kein Scanner freigegeben. Klicke auf 'Scanner auswählen'.");
       } catch (err) {
         log(`Scanner-Prüfung fehlgeschlagen: ${err.message || err}`, "warn");
       }
       updateUi();
       post({ type: "leader-who-is-there" });
+      console.time("leader election to becomeLeader");
       participateInLeaderElection();
+      console.timeEnd("leader election to becomeLeader");
     })();
   </script>
 </body>
