@@ -281,18 +281,63 @@
       if (leaderHeartbeatTimer) clearInterval(leaderHeartbeatTimer);
       leaderHeartbeatTimer = null;
     }
+    
+    const scannerVendorRank = new Map([
+      [0x05E0, 100], // Symbol / Zebra Scanner
+      [0x05F9, 95],  // PSC / Datalogic
+      [0x1EAB, 90],  // Newland
+      [0x0C2E, 85],  // Metrologic / Honeywell
+      [0x0536, 80],  // Hand Held Products / Honeywell
+      [0x080C, 75],  // Datalogic
+      [0x065A, 70],  // Opticon
+      [0x0A5F, 45],  // Zebra, oft auch Drucker
+      [0x0403, 30],  // FTDI USB-Serial
+      [0x10C4, 30],  // Silicon Labs CP210x
+      [0x067B, 25],  // Prolific USB-Serial
+      [0x1A86, 20],  // WCH CH340/CH341
+    ]);
+    
+    let candidatePorts = [];
+    
+    function portInfoLabel(port, score = 0) {
+      const info = port.getInfo();
+      const vid = info.usbVendorId;
+      const pid = info.usbProductId;
+      const vidHex = vid ? "0x" + vid.toString(16).padStart(4, "0").toUpperCase() : "unbekannt";
+      const pidHex = pid ? "0x" + pid.toString(16).padStart(4, "0").toUpperCase() : "unbekannt";
+      return `VID ${vidHex}, PID ${pidHex}, Score ${score}`;
+    }
+    
+    function rankSerialPorts(ports) {
+      return ports
+        .map((port, index) => {
+          const info = port.getInfo();
+          const score = scannerVendorRank.get(info.usbVendorId) ?? 0;
+          return { port, index, score, info };
+        })
+        .sort((a, b) => b.score - a.score || a.index - b.index);
+    }
 
+    
     async function ensureKnownPort() {
       if (!("serial" in navigator)) throw new Error("Web Serial wird nicht unterstützt.");
       if (port) return true;
+    
       const ports = await navigator.serial.getPorts();
-      if (ports.length > 0) {
-        port = ports[0];
-        log("Freigegebenen Scanner gefunden.");
-        updateUi();
-        return true;
+      if (ports.length === 0) return false;
+    
+      candidatePorts = rankSerialPorts(ports);
+    
+      const best = candidatePorts[0];
+      port = best.port;
+    
+      log(`Freigegebenen Scanner-Kandidat gewählt: ${portInfoLabel(port, best.score)}.`);
+      if (candidatePorts.length > 1) {
+        log(`${candidatePorts.length} serielle Ports gefunden, bester Kandidat nach Vendor-ID gewählt.`);
       }
-      return false;
+    
+      updateUi();
+      return true;
     }
 
     async function requestPortFromUser() {
@@ -303,17 +348,42 @@
     }
 
     async function openPortIfPossible() {
-      if (!isLeader || !port || opening || port.readable) return;
+      if (!isLeader || opening || port?.readable) return;
+    
+      if (!port) {
+        const found = await ensureKnownPort();
+        if (!found) return;
+      }
+    
       opening = true;
       try {
-        await port.open({ baudRate: BAUD_RATE });
-        keepReading = true;
-        log(`Scanner geöffnet (${BAUD_RATE} baud).`);
-        updateUi();
-        readLoop().catch((err) => {
-          log(`Leseloop-Fehler: ${err.message || err}`, "error");
-          updateUi();
-        });
+        const candidates = candidatePorts.length
+          ? candidatePorts.map((c) => c.port)
+          : [port];
+    
+        const uniqueCandidates = [...new Set(candidates)];
+    
+        for (const candidate of uniqueCandidates) {
+          try {
+            port = candidate;
+            await port.open({ baudRate: BAUD_RATE });
+    
+            keepReading = true;
+            log(`Scanner geöffnet (${BAUD_RATE} baud): ${portInfoLabel(port)}.`);
+            updateUi();
+    
+            readLoop().catch((err) => {
+              log(`Leseloop-Fehler: ${err.message || err}`, "error");
+              updateUi();
+            });
+    
+            return;
+          } catch (err) {
+            log(`Port-Kandidat konnte nicht geöffnet werden: ${portInfoLabel(candidate)} · ${err.message || err}`, "warn");
+          }
+        }
+    
+        throw new Error("Keiner der freigegebenen seriellen Ports konnte geöffnet werden.");
       } finally {
         opening = false;
       }
