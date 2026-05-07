@@ -24,6 +24,7 @@ const DEFAULTS = Object.freeze({
   reopenMaxBackoffMs: 5000,       // cap for exponential backoff
   heartbeatMs: 1000,
   tabId: null,                   // auto-generated if null
+  requireVendorId: true,         // skip ports without usbVendorId (built-in COM, BT-SPP, virtual ports)
 });
 
 const STATES = Object.freeze({
@@ -94,6 +95,7 @@ export class ScannerHub extends EventTarget {
     this.reopenMaxBackoffMs = cfg.reopenMaxBackoffMs;
     this.heartbeatMs = cfg.heartbeatMs;
     this.tabId = cfg.tabId || (crypto.randomUUID().slice(0, 8));
+    this.requireVendorId = cfg.requireVendorId;
 
     /** @type {Map<string, ScannerEntry>} */
     this.scanners = new Map();
@@ -198,6 +200,13 @@ export class ScannerHub extends EventTarget {
     if (!("serial" in navigator)) throw new Error("Web Serial nicht unterstützt");
     const port = await navigator.serial.requestPort();
     const id = await this._registerPort(port);
+    if (!id) {
+      this._emit("log", {
+        level: "warn",
+        message: "Ausgewählter Port wurde gefiltert (keine usbVendorId). requireVendorId:false setzen, um ihn zuzulassen.",
+      });
+      return null;
+    }
     this._emit("log", { level: "info", message: `Scanner autorisiert: ${this.scanners.get(id)?.label}` });
     if (this.isLeader) this._scheduleOpen(id);
     return id;
@@ -267,6 +276,13 @@ export class ScannerHub extends EventTarget {
       if (existing.port === port) return existing.id;
     }
     const info = port.getInfo?.() ?? {};
+    if (this.requireVendorId && info.usbVendorId === undefined) {
+      this._emit("log", {
+        level: "info",
+        message: "Port ohne usbVendorId ignoriert (kein USB-Gerät, oder Hersteller meldet keine VID).",
+      });
+      return null;
+    }
     // Compute a stable index amongst ports with the same VID/PID (for ID).
     let sameModelIndex = 0;
     for (const e of this.scanners.values()) {
@@ -603,6 +619,7 @@ export class ScannerHub extends EventTarget {
     if (!port) return;
     try {
       const id = await this._registerPort(port);
+      if (!id) return; // filtered out (e.g. no VID)
       this._emit("log", { level: "info", message: `Scanner verbunden: ${this.scanners.get(id)?.label}` });
       if (this.isLeader) this._scheduleOpen(id);
     } catch (err) {
