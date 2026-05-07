@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Barcode Tabs</title>
+  <title>Barcode Scanner Hub</title>
   <style>
     :root {
       color-scheme: dark;
@@ -97,11 +97,23 @@
       font: 800 clamp(16px, 2vw, 24px)/1.1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       word-break: break-word;
     }
-    .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 156px; overflow: auto; }
+    .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 220px; overflow: auto; }
     .list li { border: 1px solid var(--line); background: var(--panel2); border-radius: 9px; padding: 7px 9px; }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     .tiny { color: var(--muted); font-size: 11px; }
     .headrow { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+    .scanner-row {
+      display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; align-items: center;
+    }
+    .state-pill {
+      font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px;
+      border: 1px solid var(--line); white-space: nowrap;
+    }
+    .state-pill.open { background: rgba(45,212,191,.15); border-color: rgba(45,212,191,.5); color: #a7f3d0; }
+    .state-pill.opening, .state-pill.closing { background: rgba(251,191,36,.12); border-color: rgba(251,191,36,.45); color: #fde68a; }
+    .state-pill.error { background: rgba(251,113,133,.12); border-color: rgba(251,113,133,.5); color: #fda4af; }
+    .state-pill.closed, .state-pill.known { background: rgba(255,255,255,.06); color: var(--muted); }
+    .scan-source { color: var(--muted); font-size: 11px; margin-top: 2px; }
   </style>
 </head>
 <body>
@@ -110,18 +122,21 @@
       <div class="topbar">
         <div class="pill"><span class="dot" id="heroDot"></span><span id="heroText">Startet…</span></div>
         <div>
-          <h1>Barcode-Scanner in mehreren Tabs</h1>
-          <div class="sub">Ein Tab liest den Scanner. Nur der aktive Tab zeigt den Scan sichtbar an.</div>
+          <h1>Barcode-Scanner Hub</h1>
+          <div class="sub">Mehrere Scanner gleichzeitig, hot-pluggable. Ein Tab liest, alle Tabs zeigen den Scan im Vordergrund.</div>
         </div>
         <div class="pill"><span class="dot" id="focusDot"></span><span id="focusText">Tab wird geprüft…</span></div>
       </div>
       <div class="actions">
-        <button id="btnGrant">Scanner auswählen</button>
-        <button id="btnReconnect" class="secondary">Freigegebenen Scanner laden</button>
-        <button id="btnRelease" class="warn-btn">Scanner im Leader schließen</button>
-        <button id="btnClear" class="secondary">Scans und Log leeren</button>
+        <button id="btnGrant">Scanner hinzufügen</button>
+        <button id="btnRefresh" class="secondary">Bekannte Scanner neu laden</button>
+        <button id="btnRelease" class="warn-btn">Alle Scanner schließen</button>
+        <button id="btnClear" class="secondary">Listen leeren</button>
       </div>
-      <div class="sub" style="margin-top:6px">Öffne dieselbe Seite mehrfach unter <span class="mono">http://localhost</span>. Ein echter Klick ist nur beim ersten Auswählen nötig.</div>
+      <div class="sub" style="margin-top:6px">
+        Öffne dieselbe Seite mehrfach unter <span class="mono">http://localhost</span> (oder per HTTPS).
+        „Scanner hinzufügen" muss pro Gerät einmal angeklickt werden &ndash; danach klappt ein- und ausstecken automatisch.
+      </div>
     </section>
 
     <div class="grid">
@@ -130,9 +145,9 @@
         <div class="status">
           <div class="kv"><div class="label">Tab</div><div class="value mono" id="tabId">—</div></div>
           <div class="kv"><div class="label">Rolle</div><div class="value" id="role">—</div></div>
-          <div class="kv"><div class="label">Port</div><div class="value" id="portStatus">—</div></div>
           <div class="kv"><div class="label">Leader</div><div class="value mono" id="leaderStatus">—</div></div>
           <div class="kv"><div class="label">Tab aktiv</div><div class="value" id="focusStatus">—</div></div>
+          <div class="kv"><div class="label">Scanner</div><div class="value" id="scannerCount">0</div></div>
           <div class="kv"><div class="label">Letzter Scan</div><div class="value mono" id="lastScan">—</div></div>
         </div>
       </section>
@@ -144,106 +159,57 @@
           <div class="flash-box" id="flashPanel">
             <div class="flash-caption">Zuletzt angezeigt</div>
             <div class="flash-value" id="flashValue">—</div>
+            <div class="scan-source" id="flashSource"></div>
           </div>
         </div>
       </section>
 
       <section class="card">
-        <div class="headrow"><h2>Ereignisse</h2><div class="tiny">neu oben</div></div>
-        <ul class="list" id="log"></ul>
+        <div class="headrow"><h2>Scanner</h2><div class="tiny">VID/PID · Status</div></div>
+        <ul class="list" id="scannerList"></ul>
       </section>
 
       <section class="card">
-        <div class="headrow"><h2>Scans im aktiven Tab</h2><div class="tiny">nur Vordergrund</div></div>
+        <div class="headrow"><h2>Scans</h2><div class="tiny">neueste oben · mit Quelle</div></div>
         <ul class="list" id="scans"></ul>
+      </section>
+
+      <section class="card" style="grid-column: 1 / -1;">
+        <div class="headrow"><h2>Ereignisse</h2><div class="tiny">neu oben</div></div>
+        <ul class="list" id="log" style="max-height: 180px;"></ul>
       </section>
     </div>
   </div>
 
-  <script>
-    const BAUD_RATE = 9600;
-    const LOCK_NAME = "barcode-scanner-leader";
-    const CHANNEL_NAME = "barcode-scans";
-    const tabId = crypto.randomUUID().slice(0, 8);
-    const channel = new BroadcastChannel(CHANNEL_NAME);
+  <script type="module">
+    import { ScannerHub, ScannerStates } from "./scanner.js";
 
-    let port = null;
-    let reader = null;
-    let keepReading = false;
-    let isLeader = false;
-    let opening = false;
-    let lockAbortController = null;
-    let currentLeaderId = null;
-    let readBuffer = "";
-    let flashTimer = null;
-    let leaderHeartbeatTimer = null;
-
+    // ---- DOM helpers --------------------------------------------------------
+    const $ = (id) => document.getElementById(id);
     const els = {
-      tabId: document.getElementById("tabId"),
-      role: document.getElementById("role"),
-      portStatus: document.getElementById("portStatus"),
-      leaderStatus: document.getElementById("leaderStatus"),
-      focusStatus: document.getElementById("focusStatus"),
-      lastScan: document.getElementById("lastScan"),
-      heroDot: document.getElementById("heroDot"),
-      heroText: document.getElementById("heroText"),
-      log: document.getElementById("log"),
-      scans: document.getElementById("scans"),
-      btnGrant: document.getElementById("btnGrant"),
-      btnReconnect: document.getElementById("btnReconnect"),
-      btnRelease: document.getElementById("btnRelease"),
-      btnClear: document.getElementById("btnClear"),
-      focusBox: document.getElementById("focusBox"),
-      focusDot: document.getElementById("focusDot"),
-      focusText: document.getElementById("focusText"),
-      flashPanel: document.getElementById("flashPanel"),
-      flashValue: document.getElementById("flashValue"),
+      heroDot: $("heroDot"), heroText: $("heroText"),
+      focusDot: $("focusDot"), focusText: $("focusText"),
+      tabId: $("tabId"), role: $("role"), leaderStatus: $("leaderStatus"),
+      focusStatus: $("focusStatus"), scannerCount: $("scannerCount"),
+      lastScan: $("lastScan"),
+      focusBox: $("focusBox"), flashPanel: $("flashPanel"),
+      flashValue: $("flashValue"), flashSource: $("flashSource"),
+      scannerList: $("scannerList"), scans: $("scans"), log: $("log"),
+      btnGrant: $("btnGrant"), btnRefresh: $("btnRefresh"),
+      btnRelease: $("btnRelease"), btnClear: $("btnClear"),
     };
 
     const esc = (s) => String(s)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+      .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 
-    function log(message, level = "info") {
-      const li = document.createElement("li");
-      li.innerHTML = `<div><strong>${new Date().toLocaleTimeString()}</strong> · ${esc(message)}</div>`;
-      if (level === "warn") li.style.borderColor = "#6b4b12";
-      if (level === "error") li.style.borderColor = "#6b2231";
-      els.log.prepend(li);
-    }
-
-    const isPageActive = () => document.visibilityState === "visible" && document.hasFocus();
-
-    function triggerFlash(code) {
-      els.flashValue.textContent = code;
-      els.flashPanel.classList.remove("flash");
-      void els.flashPanel.offsetWidth;
-      els.flashPanel.classList.add("flash");
-      clearTimeout(flashTimer);
-      flashTimer = setTimeout(() => els.flashPanel.classList.remove("flash"), 650);
-    }
-
-    function processScan(code, source) {
-      const li = document.createElement("li");
-      li.innerHTML = `<div class="mono"><strong>${esc(code)}</strong></div><div class="tiny">${new Date().toLocaleTimeString()} · ${esc(source)}</div>`;
-      els.scans.prepend(li);
-      els.lastScan.textContent = code;
-      triggerFlash(code);
-    }
-
-    function updateHero(text, state = "idle") {
+    function setHero(text, state) {
       els.heroText.textContent = text;
       els.heroDot.className = "dot";
-      if (state === "ok") els.heroDot.classList.add("ok");
-      else if (state === "warn") els.heroDot.classList.add("warn");
-      else if (state === "bad") els.heroDot.classList.add("bad");
+      if (state) els.heroDot.classList.add(state);
     }
 
-    function updateFocusUi() {
-      const active = isPageActive();
+    function setFocusUi(active) {
       els.focusStatus.textContent = active ? "ja" : "nein";
       els.focusDot.className = "dot";
       els.focusBox.classList.toggle("active", active);
@@ -256,334 +222,143 @@
       }
     }
 
-    function updateUi() {
-      els.tabId.textContent = tabId;
-      els.role.textContent = isLeader ? "Leader" : "Follower";
-      els.portStatus.textContent = port ? (port.readable ? "offen" : "bekannt") : "kein Port";
-      const leaderText = currentLeaderId ? `${currentLeaderId}${currentLeaderId === tabId ? " (ich)" : ""}` : "—";
-      els.leaderStatus.textContent = leaderText;
-      updateFocusUi();
-
-      if (isLeader && port?.readable) updateHero("Leader liest Scanner", "ok");
-      else if (isLeader) updateHero("Leader aktiv, Scanner noch zu", "warn");
-      else if (currentLeaderId) updateHero(`Follower, Leader: ${currentLeaderId}`, "ok");
-      else updateHero("Wartet auf Leader oder Scanner", "warn");
+    function logRow(message, level = "info") {
+      const li = document.createElement("li");
+      li.innerHTML =
+        `<div><strong>${new Date().toLocaleTimeString()}</strong> · ${esc(message)}</div>`;
+      if (level === "warn") li.style.borderColor = "#6b4b12";
+      if (level === "error") li.style.borderColor = "#6b2231";
+      els.log.prepend(li);
+      // cap log size
+      while (els.log.children.length > 200) els.log.lastChild.remove();
     }
 
-    const post = (message) => channel.postMessage({ ...message, from: tabId, at: Date.now() });
-
-    function startLeaderHeartbeat() {
-      stopLeaderHeartbeat();
-      leaderHeartbeatTimer = setInterval(() => post({ type: "leader-active" }), 1000);
+    let flashTimer = null;
+    function flashScan(code, sourceLabel) {
+      els.flashValue.textContent = code;
+      els.flashSource.textContent = sourceLabel;
+      els.flashPanel.classList.remove("flash");
+      void els.flashPanel.offsetWidth;
+      els.flashPanel.classList.add("flash");
+      clearTimeout(flashTimer);
+      flashTimer = setTimeout(() => els.flashPanel.classList.remove("flash"), 650);
     }
 
-    function stopLeaderHeartbeat() {
-      if (leaderHeartbeatTimer) clearInterval(leaderHeartbeatTimer);
-      leaderHeartbeatTimer = null;
-    }
-    
-    const scannerVendorRank = new Map([
-      [0x05E0, 100], // Symbol / Zebra Scanner
-      [0x05F9, 95],  // PSC / Datalogic
-      [0x1EAB, 90],  // Newland
-      [0x0C2E, 85],  // Metrologic / Honeywell
-      [0x0536, 80],  // Hand Held Products / Honeywell
-      [0x080C, 75],  // Datalogic
-      [0x065A, 70],  // Opticon
-      [0x0A5F, 45],  // Zebra, oft auch Drucker
-      [0x0403, 30],  // FTDI USB-Serial
-      [0x10C4, 30],  // Silicon Labs CP210x
-      [0x067B, 25],  // Prolific USB-Serial
-      [0x1A86, 20],  // WCH CH340/CH341
-    ]);
-    
-    let candidatePorts = [];
-    
-    function portInfoLabel(port, score = 0) {
-      const info = port.getInfo();
-      const vid = info.usbVendorId;
-      const pid = info.usbProductId;
-      const vidHex = vid ? "0x" + vid.toString(16).padStart(4, "0").toUpperCase() : "unbekannt";
-      const pidHex = pid ? "0x" + pid.toString(16).padStart(4, "0").toUpperCase() : "unbekannt";
-      return `VID ${vidHex}, PID ${pidHex}, Score ${score}`;
-    }
-    
-    function rankSerialPorts(ports) {
-      return ports
-        .map((port, index) => {
-          const info = port.getInfo();
-          const score = scannerVendorRank.get(info.usbVendorId) ?? 0;
-          return { port, index, score, info };
-        })
-        .sort((a, b) => b.score - a.score || a.index - b.index);
-    }
-
-    
-    async function ensureKnownPort() {
-      if (!("serial" in navigator)) throw new Error("Web Serial wird nicht unterstützt.");
-      if (port) return true;
-    
-      const ports = await navigator.serial.getPorts();
-      if (ports.length === 0) return false;
-    
-      candidatePorts = rankSerialPorts(ports);
-    
-      const best = candidatePorts[0];
-      port = best.port;
-    
-      log(`Freigegebenen Scanner-Kandidat gewählt: ${portInfoLabel(port, best.score)}.`);
-      if (candidatePorts.length > 1) {
-        log(`${candidatePorts.length} serielle Ports gefunden, bester Kandidat nach Vendor-ID gewählt.`);
-      }
-    
-      updateUi();
-      return true;
-    }
-
-    async function requestPortFromUser() {
-      port = await navigator.serial.requestPort();
-      log("Scanner ausgewählt.");
-      updateUi();
-      if (isLeader) await openPortIfPossible();
-    }
-
-    async function openPortIfPossible() {
-      if (!isLeader || opening || port?.readable) return;
-    
-      if (!port) {
-        const found = await ensureKnownPort();
-        if (!found) return;
-      }
-    
-      opening = true;
-      try {
-        const candidates = candidatePorts.length
-          ? candidatePorts.map((c) => c.port)
-          : [port];
-    
-        const uniqueCandidates = [...new Set(candidates)];
-    
-        for (const candidate of uniqueCandidates) {
-          try {
-            port = candidate;
-            await port.open({ baudRate: BAUD_RATE });
-    
-            keepReading = true;
-            log(`Scanner geöffnet (${BAUD_RATE} baud): ${portInfoLabel(port)}.`);
-            updateUi();
-    
-            readLoop().catch((err) => {
-              log(`Leseloop-Fehler: ${err.message || err}`, "error");
-              updateUi();
-            });
-    
-            return;
-          } catch (err) {
-            log(`Port-Kandidat konnte nicht geöffnet werden: ${portInfoLabel(candidate)} · ${err.message || err}`, "warn");
-          }
-        }
-    
-        throw new Error("Keiner der freigegebenen seriellen Ports konnte geöffnet werden.");
-      } finally {
-        opening = false;
-      }
-    }
-
-    async function closePort() {
-      keepReading = false;
-      readBuffer = "";
-      try { if (reader) await reader.cancel(); } catch {}
-      try { if (reader) reader.releaseLock(); } catch {}
-      reader = null;
-      try {
-        if (port?.readable) {
-          await port.close();
-          log("Scanner geschlossen.");
-        }
-      } catch (err) {
-        log(`Schließen fehlgeschlagen: ${err.message || err}`, "warn");
-      }
-      updateUi();
-    }
-
-    function deliverScan(code, source) {
-      if (!isPageActive()) {
-        log(`Ignoriert (Tab nicht aktiv): ${code}`, "warn");
+    function renderScannerList(hub) {
+      const list = hub.listScanners();
+      els.scannerCount.textContent = String(list.length);
+      els.scannerList.innerHTML = "";
+      if (!list.length) {
+        const li = document.createElement("li");
+        li.innerHTML = `<div class="tiny">Noch kein Scanner autorisiert. Klicke auf „Scanner hinzufügen".</div>`;
+        els.scannerList.appendChild(li);
         return;
       }
-      processScan(code, source);
-    }
-
-    function consumeChunk(text) {
-      readBuffer += text;
-      const parts = readBuffer.split(/\r?\n/);
-      readBuffer = parts.pop() ?? "";
-      for (const raw of parts) {
-        const code = raw.trim();
-        if (!code) continue;
-        post({ type: "scan", code });
-        deliverScan(code, "leader/lokal");
+      for (const s of list) {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <div class="scanner-row">
+            <span class="dot ${s.state === "open" ? "ok" : (s.state === "error" ? "bad" : "warn")}"></span>
+            <div>
+              <div><strong>${esc(s.label)}</strong></div>
+              <div class="tiny mono">${esc(s.id)}${s.lastError ? " · " + esc(s.lastError) : ""}</div>
+            </div>
+            <span class="state-pill ${esc(s.state)}">${esc(s.state)}</span>
+            <button class="secondary" data-release="${esc(s.id)}">schließen</button>
+          </div>`;
+        els.scannerList.appendChild(li);
       }
+      els.scannerList.querySelectorAll("[data-release]").forEach((btn) => {
+        btn.addEventListener("click", () => hub.releaseScanner(btn.dataset.release));
+      });
     }
 
-    async function readLoop() {
-      const decoder = new TextDecoder();
-      while (isLeader && keepReading && port?.readable) {
-        reader = port.readable.getReader();
-        try {
-          while (isLeader && keepReading) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            if (!value) continue;
-            consumeChunk(decoder.decode(value, { stream: true }));
-          }
-        } catch (err) {
-          log(`Lesefehler: ${err.message || err}`, "warn");
-        } finally {
-          try { reader.releaseLock(); } catch {}
-          reader = null;
-        }
+    function renderHero(hub) {
+      if (hub.isLeader && [...hub.scanners.values()].some(s => s.state === "open")) {
+        setHero(`Leader liest ${[...hub.scanners.values()].filter(s => s.state === "open").length} Scanner`, "ok");
+      } else if (hub.isLeader) {
+        setHero("Leader, noch kein Scanner offen", "warn");
+      } else if (hub.currentLeaderId) {
+        setHero(`Follower, Leader: ${hub.currentLeaderId}`, "ok");
+      } else {
+        setHero("Wartet auf Leader", "warn");
       }
+      els.role.textContent = hub.isLeader ? "Leader" : "Follower";
+      els.leaderStatus.textContent = hub.currentLeaderId
+        ? `${hub.currentLeaderId}${hub.currentLeaderId === hub.tabId ? " (ich)" : ""}`
+        : "—";
     }
 
-    const waitUntilAborted = (signal) => new Promise((resolve) => {
-      if (signal.aborted) return resolve();
-      signal.addEventListener("abort", resolve, { once: true });
+    // ---- wire up ------------------------------------------------------------
+    const hub = new ScannerHub();
+    els.tabId.textContent = hub.tabId;
+    setFocusUi(document.visibilityState === "visible" && document.hasFocus());
+
+    hub.addEventListener("scan", (e) => {
+      const { code, label, source, from, scannerId } = e.detail;
+      const li = document.createElement("li");
+      const sourceText = source === "local"
+        ? `${label}`
+        : `${label} · via ${from}`;
+      li.innerHTML = `
+        <div class="mono"><strong>${esc(code)}</strong></div>
+        <div class="scan-source">${new Date().toLocaleTimeString()} · ${esc(sourceText)} · <span class="mono">${esc(scannerId)}</span></div>`;
+      els.scans.prepend(li);
+      while (els.scans.children.length > 200) els.scans.lastChild.remove();
+      els.lastScan.textContent = code;
+      flashScan(code, sourceText);
     });
 
-    async function becomeLeader(signal) {
-      isLeader = true;
-      currentLeaderId = tabId;
-      post({ type: "leader-active" });
-      startLeaderHeartbeat();
-      log("Dieser Tab ist jetzt Leader.");
-      updateUi();
-      try {
-        console.time("becomeLeader total");
-        console.time("leader ensureKnownPort");
-        await ensureKnownPort().catch(() => false);
-        console.timeEnd("leader ensureKnownPort");
-        
-        console.time("openPortIfPossible");
-        await openPortIfPossible().catch((err) => log(`Öffnen fehlgeschlagen: ${err.message || err}`, "warn"));
-        console.timeEnd("openPortIfPossible");
-
-        console.time("waitUntilAborted");
-        await waitUntilAborted(signal);
-        console.timeEnd("waitUntilAborted");
-      } finally {
-        stopLeaderHeartbeat();
-        await closePort();
-        isLeader = false;
-        currentLeaderId = null;
-        post({ type: "leader-inactive" });
-        log("Leader-Rolle abgegeben.");
-        updateUi();
-      }
-    }
-
-    async function participateInLeaderElection() {
-      if (!("locks" in navigator)) {
-        log("Web Locks API fehlt.", "error");
-        updateHero("Web Locks API fehlt", "bad");
-        return;
-      }
-      while (true) {
-        const ac = new AbortController();
-        lockAbortController = ac;
-        try {
-          await navigator.locks.request(LOCK_NAME, async () => becomeLeader(ac.signal));
-        } catch (err) {
-          log(`Lock-Fehler: ${err.message || err}`, "warn");
-        }
-        await new Promise((r) => setTimeout(r, 250));
-      }
-    }
-
-    channel.addEventListener("message", (event) => {
-      const msg = event.data;
-      if (!msg || msg.from === tabId) return;
-      if (msg.type === "scan") deliverScan(msg.code, `broadcast:${msg.from}`);
-      if (msg.type === "leader-active") currentLeaderId = msg.from;
-      if (msg.type === "leader-inactive" && !isLeader && currentLeaderId === msg.from) currentLeaderId = null;
-      if (msg.type === "leader-who-is-there" && isLeader) post({ type: "leader-active" });
-      updateUi();
+    hub.addEventListener("scanner-added", (e) => {
+      logRow(`Scanner registriert: ${e.detail.label} (${e.detail.scannerId})`);
+      renderScannerList(hub); renderHero(hub);
     });
-
-    navigator.serial?.addEventListener?.("connect", async () => {
-      log("Scanner verbunden.");
-      await ensureKnownPort().catch(() => false);
-      if (isLeader) await openPortIfPossible().catch((err) => log(`Öffnen nach connect fehlgeschlagen: ${err.message || err}`, "warn"));
-      updateUi();
+    hub.addEventListener("scanner-removed", (e) => {
+      logRow(`Scanner entfernt: ${e.detail.label}`, "warn");
+      renderScannerList(hub); renderHero(hub);
     });
-
-    navigator.serial?.addEventListener?.("disconnect", async () => {
-      log("Scanner getrennt.", "warn");
-      await closePort();
-      port = null;
-      updateUi();
+    hub.addEventListener("scanner-state", () => {
+      renderScannerList(hub); renderHero(hub);
     });
-
-    window.addEventListener("focus", updateUi);
-    window.addEventListener("blur", updateUi);
-    document.addEventListener("visibilitychange", updateUi);
-    window.addEventListener("beforeunload", () => {
-      if (lockAbortController) lockAbortController.abort();
-      stopLeaderHeartbeat();
-      try { channel.close(); } catch {}
+    hub.addEventListener("leader-change", () => {
+      renderHero(hub); renderScannerList(hub);
+    });
+    hub.addEventListener("tab-active", (e) => {
+      setFocusUi(e.detail.active);
+    });
+    hub.addEventListener("log", (e) => {
+      logRow(e.detail.message, e.detail.level);
     });
 
     els.btnGrant.addEventListener("click", async () => {
-      try { await requestPortFromUser(); }
-      catch (err) { log(`Auswählen fehlgeschlagen: ${err.message || err}`, "warn"); }
+      try { await hub.requestPort(); }
+      catch (err) { logRow(`Auswählen fehlgeschlagen: ${err.message || err}`, "warn"); }
     });
-
-    els.btnReconnect.addEventListener("click", async () => {
-      try {
-        const found = await ensureKnownPort();
-        if (!found) return log("Kein freigegebener Scanner gefunden.", "warn");
-        if (isLeader) await openPortIfPossible();
-      } catch (err) {
-        log(`Laden fehlgeschlagen: ${err.message || err}`, "warn");
-      }
+    els.btnRefresh.addEventListener("click", async () => {
+      try { await hub.refresh(); renderScannerList(hub); }
+      catch (err) { logRow(`Refresh fehlgeschlagen: ${err.message || err}`, "warn"); }
     });
-
     els.btnRelease.addEventListener("click", async () => {
-      await closePort();
+      await hub.releaseAll();
     });
-
     els.btnClear.addEventListener("click", () => {
       els.scans.innerHTML = "";
       els.log.innerHTML = "";
       els.lastScan.textContent = "—";
       els.flashValue.textContent = "—";
+      els.flashSource.textContent = "";
       els.flashPanel.classList.remove("flash");
-      log("Listen geleert.");
+      logRow("Listen geleert.");
     });
 
-    (async function init() {
-      els.tabId.textContent = tabId;
-      log("Seite geladen.");
-      if (!("serial" in navigator)) {
-        updateHero("Web Serial wird nicht unterstützt", "bad");
-        log("Dieser Browser unterstützt Web Serial nicht.", "error");
-        updateUi();
-        return;
-      }
-      try {
-        console.time("init ensureKnownPort");
-        const found = await ensureKnownPort();
-        console.timeEnd("init ensureKnownPort");
-        if (!found) log("Noch kein Scanner freigegeben. Klicke auf 'Scanner auswählen'.");
-      } catch (err) {
-        log(`Scanner-Prüfung fehlgeschlagen: ${err.message || err}`, "warn");
-      }
-      updateUi();
-      post({ type: "leader-who-is-there" });
-      console.time("leader election to becomeLeader");
-      participateInLeaderElection();
-      console.timeEnd("leader election to becomeLeader");
-    })();
+    try {
+      await hub.start();
+      renderScannerList(hub);
+      renderHero(hub);
+    } catch (err) {
+      setHero(err.message || String(err), "bad");
+      logRow(err.message || String(err), "error");
+    }
   </script>
 </body>
 </html>
